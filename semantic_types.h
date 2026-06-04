@@ -11,8 +11,8 @@ using namespace std;
 
 class Type {
 public:
-    enum TType { NOTYPE, VOID, INT, BOOL };
-    static const char* type_names[4];
+    enum TType { NOTYPE, VOID, INT, BOOL, FLOAT };
+    static const char* type_names[5];
 
     TType ttype;
 
@@ -37,12 +37,13 @@ public:
         if (s == "int") return INT;
         if (s == "bool") return BOOL;
         if (s == "void") return VOID;
+        if (s == "float") return FLOAT;
         return NOTYPE;
     }
 
 
 };
 
-inline const char* Type::type_names[4] = { "notype", "void", "int", "bool" };
+inline const char* Type::type_names[5] = { "notype", "void", "int", "bool", "float" };
 
 #endif // SEMANTIC_TYPES_H

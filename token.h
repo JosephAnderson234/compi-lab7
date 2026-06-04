@@ -31,7 +31,13 @@ public:
         AND,
         SEMICOL,    
         ASSIGN,
+        COLON,
         PRINT,
+        WHILE,
+        ENDWHILE,
+        IF,
+        ELSE,
+        ENDIF,
         END      // Fin de entrada
     };
 

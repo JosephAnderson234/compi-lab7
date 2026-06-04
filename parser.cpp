@@ -64,6 +64,7 @@ Program* Parser::parseProgram() {
         match(Token::SEMICOL);
         while(check(Token::VAR)){
             p->vdlist.push_back(parseVarDec());
+            match(Token::SEMICOL);
         }
     }
 
@@ -116,6 +117,7 @@ FunDec* Parser::parseFunDec(){
         }
     }
     match(Token::RPAREN);
+    match(Token::COLON); // opcional ':'
     fd -> cuerpo = parseBody();
     match(Token::ENDFUN);
     return fd;
@@ -155,10 +157,17 @@ Stm* Parser::parseStm() {
     }
     else if(match(Token::RETURN)){
         ReturnStm* r = new ReturnStm();
-        match(Token::LPAREN);
-        r->e = parseCE();
-        match(Token::RPAREN);
+        if (match(Token::LPAREN)) {
+            r->e = parseCE();
+            match(Token::RPAREN);
+        }
         return r;
+    }
+    else if(match(Token::WHILE)){
+        return parseWhileStm();
+    }
+    else if(match(Token::IF)){
+        return parseIfStm();
     }
     else{
         throw runtime_error("Error sintáctico");
@@ -166,6 +175,28 @@ Stm* Parser::parseStm() {
     return a;
 }
 
+
+Stm* Parser::parseWhileStm() {
+    match(Token::LPAREN);
+    Exp* cond = parseCE();
+    match(Token::RPAREN);
+    Body* b = parseBody();
+    match(Token::ENDWHILE);
+    return new WhileStm(cond, b);
+}
+
+Stm* Parser::parseIfStm() {
+    match(Token::LPAREN);
+    Exp* cond = parseCE();
+    match(Token::RPAREN);
+    Body* thenB = parseBody();
+    Body* elseB = nullptr;
+    if (match(Token::ELSE)) {
+        elseB = parseBody();
+    }
+    match(Token::ENDIF);
+    return new IfStm(cond, thenB, elseB);
+}
 
 Exp* Parser::parseCE() {
     Exp* l = parseBE();
@@ -238,7 +269,8 @@ Exp* Parser::parseT() {
 Exp* Parser::parseF() {
     Exp* e; 
     if (match(Token::NUM)) {
-        return new NumberExp(stoi(previous->text));
+        bool is_float = (previous->text.find('.') != string::npos);
+        return new NumberExp(stod(previous->text), is_float);
     } 
     else if (match(Token::LPAREN))
     {

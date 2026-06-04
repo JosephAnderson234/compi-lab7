@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstring>
+#include <cctype>
 #include <fstream>
 #include "token.h"
 #include "scanner.h"
@@ -40,11 +41,16 @@ Token* Scanner::nextToken() {
 
     first = current;
 
-    // Números
+    // Números (enteros y flotantes)
     if (isdigit(c)) {
         current++;
         while (current < input.length() && isdigit(input[current]))
             current++;
+        if (current < input.length() && input[current] == '.') {
+            current++;
+            while (current < input.length() && isdigit(input[current]))
+                current++;
+        }
         token = new Token(Token::NUM, input, first, current - first);
     }
     // ID
@@ -53,18 +59,26 @@ Token* Scanner::nextToken() {
         while (current < input.length() && isalnum(input[current]))
             current++;
         string lexema = input.substr(first, current - first);
-        if (lexema=="print") return new Token(Token::PRINT, input, first, current - first);
-        else if (lexema=="return") return new Token(Token::RETURN, input, first, current - first);
-        else if (lexema=="var") return new Token(Token::VAR, input, first, current - first);
-        else if (lexema=="fun") return new Token(Token::FUN, input, first, current - first);                
-        else if (lexema=="endfun") return new Token(Token::ENDFUN, input, first, current - first);
-        else if (lexema=="false") return new Token(Token::FALSE, input, first, current - first);
-        else if (lexema=="true") return new Token(Token::TRUE, input, first, current - first);
-        else if (lexema=="and") return new Token(Token::AND, input, first, current - first);
+        // Case-insensitive keyword matching
+        string lower;
+        for (char ch : lexema) lower += tolower(ch);
+        if (lower=="print") return new Token(Token::PRINT, input, first, current - first);
+        else if (lower=="return") return new Token(Token::RETURN, input, first, current - first);
+        else if (lower=="var") return new Token(Token::VAR, input, first, current - first);
+        else if (lower=="fun") return new Token(Token::FUN, input, first, current - first);                
+        else if (lower=="endfun") return new Token(Token::ENDFUN, input, first, current - first);
+        else if (lower=="false") return new Token(Token::FALSE, input, first, current - first);
+        else if (lower=="true") return new Token(Token::TRUE, input, first, current - first);
+        else if (lower=="and") return new Token(Token::AND, input, first, current - first);
+        else if (lower=="while") return new Token(Token::WHILE, input, first, current - first);
+        else if (lower=="endwhile") return new Token(Token::ENDWHILE, input, first, current - first);
+        else if (lower=="if") return new Token(Token::IF, input, first, current - first);
+        else if (lower=="else") return new Token(Token::ELSE, input, first, current - first);
+        else if (lower=="endif") return new Token(Token::ENDIF, input, first, current - first);
         else return new Token(Token::ID, input, first, current - first);
     }
     // Operadores
-    else if (strchr("+/-*();=,<", c)) {
+    else if (strchr("+/-*();=,<:", c)) {
         switch (c) {
             case ',': token = new Token(Token::COMA,  c); break;
             case '<': token = new Token(Token::LE, c); break;
@@ -85,6 +99,7 @@ Token* Scanner::nextToken() {
             case ')': token = new Token(Token::RPAREN,c); break;
             case '=': token = new Token(Token::ASSIGN,c); break;
             case ';': token = new Token(Token::SEMICOL,c); break;
+            case ':': token = new Token(Token::COLON,c); break;
         }
         current++;
     }

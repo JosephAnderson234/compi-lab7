@@ -12,16 +12,18 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////////
 
 // Expresiones
-int BinaryExp::accept(Visitor* visitor) { return visitor->visit(this); }
-int BoolExp::accept(Visitor* visitor) { return visitor->visit(this); }
-int NumberExp::accept(Visitor* visitor) { return visitor->visit(this); }
-int IdExp::accept(Visitor* visitor)     { return visitor->visit(this); }
-int FcallExp::accept(Visitor* visitor)  { return visitor->visit(this); }
+double BinaryExp::accept(Visitor* visitor) { return visitor->visit(this); }
+double BoolExp::accept(Visitor* visitor) { return visitor->visit(this); }
+double NumberExp::accept(Visitor* visitor) { return visitor->visit(this); }
+double IdExp::accept(Visitor* visitor)     { return visitor->visit(this); }
+double FcallExp::accept(Visitor* visitor)  { return visitor->visit(this); }
 
 // Sentencias
 int PrintStm::accept(Visitor* visitor)  { return visitor->visit(this); }
 int AssignStm::accept(Visitor* visitor) { return visitor->visit(this); }
 int ReturnStm::accept(Visitor* visitor) { return visitor->visit(this); }
+int WhileStm::accept(Visitor* visitor) { return visitor->visit(this); }
+int IfStm::accept(Visitor* visitor) { return visitor->visit(this); }
 
 // Declaraciones
 int VarDec::accept(Visitor* visitor)    { return visitor->visit(this); }
@@ -35,17 +37,17 @@ int Program::accept(Visitor* visitor)   { return visitor->visit(this); }
 //                    SECCIÓN 2: IMPLEMENTACIÓN DE PrintVisitor
 ///////////////////////////////////////////////////////////////////////////////////
 
-int PrintVisitor::visit(NumberExp* exp) {
+double PrintVisitor::visit(NumberExp* exp) {
     cout << exp->value;
     return 0;
 }
 
-int PrintVisitor::visit(IdExp* exp) {
+double PrintVisitor::visit(IdExp* exp) {
     cout << exp->value;
     return 0;
 }
 
-int PrintVisitor::visit(BoolExp* exp) {
+double PrintVisitor::visit(BoolExp* exp) {
     if (exp->value==1){
         cout << "true";
     }
@@ -55,7 +57,7 @@ int PrintVisitor::visit(BoolExp* exp) {
     return 0;
 }
 
-int PrintVisitor::visit(BinaryExp* exp) {
+double PrintVisitor::visit(BinaryExp* exp) {
     exp->left->accept(this);
     cout << ' ' << Exp::binopToChar(exp->op) << ' ';
     exp->right->accept(this);
@@ -83,6 +85,28 @@ int PrintVisitor::visit(ReturnStm* stm) {
     return 0;
 }
 
+int PrintVisitor::visit(WhileStm* stm) {
+    cout << "while (";
+    stm->condition->accept(this);
+    cout << ") ";
+    stm->body->accept(this);
+    cout << "endwhile" << endl;
+    return 0;
+}
+
+int PrintVisitor::visit(IfStm* stm) {
+    cout << "if (";
+    stm->condition->accept(this);
+    cout << ") ";
+    stm->thenBody->accept(this);
+    if (stm->elseBody) {
+        cout << "else ";
+        stm->elseBody->accept(this);
+    }
+    cout << "endif" << endl;
+    return 0;
+}
+
 int PrintVisitor::visit(VarDec* vd) {
     cout << "var " << vd->tipo;
     for(auto i:vd->variables){
@@ -104,7 +128,7 @@ int PrintVisitor::visit(Body* b) {
     return 0;
 }
 
-int PrintVisitor::visit(FcallExp* fcall) {
+double PrintVisitor::visit(FcallExp* fcall) {
     cout << fcall-> nombre << "(";
     for (auto i : fcall->argumentos) {
         i->accept(this);
@@ -145,22 +169,22 @@ void PrintVisitor::imprimir(Program* programa) {
 //                    SECCIÓN 3: IMPLEMENTACIÓN DE EVALVisitor
 ///////////////////////////////////////////////////////////////////////////////////
 
-int EVALVisitor::visit(NumberExp* exp) {
+double EVALVisitor::visit(NumberExp* exp) {
     return exp->value;
 }
 
-int EVALVisitor::visit(BoolExp* exp) {
+double EVALVisitor::visit(BoolExp* exp) {
     return exp->value;
 }
 
-int EVALVisitor::visit(IdExp* exp) {
+double EVALVisitor::visit(IdExp* exp) {
     return env.lookup(exp->value);
 }
 
-int EVALVisitor::visit(BinaryExp* exp) {
-    int v1 = exp->left->accept(this);
-    int v2 = exp->right->accept(this);
-    int result = 0;
+double EVALVisitor::visit(BinaryExp* exp) {
+    double v1 = exp->left->accept(this);
+    double v2 = exp->right->accept(this);
+    double result = 0;
 
     switch (exp->op) {
         case PLUS_OP:  result = v1 + v2; break;
@@ -174,8 +198,8 @@ int EVALVisitor::visit(BinaryExp* exp) {
             }
             break;
         case POW_OP: result = pow(v1, v2); break;
-        case LE_OP: result = v1<v2; break;
-        case AND_OP: result = v1 and v2; break;
+        case LE_OP: result = v1 < v2; break;
+        case AND_OP: result = static_cast<double>(static_cast<bool>(v1) && static_cast<bool>(v2)); break;
         default:
             cout << "Operador desconocido" << endl;
             result = 0;
@@ -189,7 +213,7 @@ int EVALVisitor::visit(PrintStm* p) {
 }
 
 int EVALVisitor::visit(AssignStm* p) {
-    env.update(p->id,p->e->accept(this));
+    env.update(p->id, p->e->accept(this));
     return 0;
 }
 
@@ -198,6 +222,26 @@ int EVALVisitor::visit(ReturnStm* stm) {
     retval = stm->e->accept(this);
     return 0;
 }
+
+int EVALVisitor::visit(WhileStm* stm) {
+    while (true) {
+        double cond = stm->condition->accept(this);
+        if (cond == 0) break;
+        stm->body->accept(this);
+    }
+    return 0;
+}
+
+int EVALVisitor::visit(IfStm* stm) {
+    double cond = stm->condition->accept(this);
+    if (cond != 0) {
+        stm->thenBody->accept(this);
+    } else if (stm->elseBody) {
+        stm->elseBody->accept(this);
+    }
+    return 0;
+}
+
 int EVALVisitor::visit(VarDec* vd) {
     for (auto& i : vd->variables) {
         env.add_var(i);  // solo declara, valor por defecto = 0
@@ -217,16 +261,15 @@ int EVALVisitor::visit(Body* b) {
     return 0;
 }
 
-int EVALVisitor::visit(FcallExp* fcall) {
+double EVALVisitor::visit(FcallExp* fcall) {
     retcall = false;
-    vector<int> arg;
+    vector<double> arg;
     for (auto i : fcall->argumentos) {
         arg.push_back(i->accept(this));
     } 
     FunDec* fd = envfun[fcall->nombre];
     env.add_level();
 
-    // Cargar los parámetros con sus valores
     for (size_t i = 0; i < arg.size(); ++i) {
         env.add_var(fd->Nparametros[i], arg[i]);
     }

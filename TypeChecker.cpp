@@ -13,6 +13,8 @@ Type* FcallExp::accept(TypeVisitor* v) { return v->visit(this); }
 void AssignStm::accept(TypeVisitor* v) { v->visit(this); }
 void PrintStm::accept(TypeVisitor* v) { v->visit(this); }
 void ReturnStm::accept(TypeVisitor* v) { v->visit(this); }
+void WhileStm::accept(TypeVisitor* v) { v->visit(this); }
+void IfStm::accept(TypeVisitor* v) { v->visit(this); }
 
 void VarDec::accept(TypeVisitor* v) { v->visit(this); }
 void FunDec::accept(TypeVisitor* v) { v->visit(this); }
@@ -27,6 +29,7 @@ TypeChecker::TypeChecker() {
     intType = new Type(Type::INT);
     boolType = new Type(Type::BOOL);
     voidType = new Type(Type::VOID);
+    floatType = new Type(Type::FLOAT);
 }
 
 // ===========================================================
@@ -45,9 +48,18 @@ void TypeChecker::add_function(FunDec* fd) {
         exit(0);
     }
 
+    FuncInfo info;
+    info.returnType = returnType;
+    for (size_t i = 0; i < fd->Tparametros.size(); ++i) {
+        Type* pt = new Type();
+        if (!pt->set_basic_type(fd->Tparametros[i])) {
+            cerr << "Error: tipo de parámetro inválido en función '" << fd->nombre << "'." << endl;
+            exit(0);
+        }
+        info.paramTypes.push_back(pt);
+    }
 
-
-    functions[fd->nombre] = returnType;
+    functions[fd->nombre] = info;
 }
 
 // ===========================================================
@@ -129,8 +141,8 @@ void TypeChecker::visit(FunDec* f) {
 
 void TypeChecker::visit(PrintStm* stm) {
     Type* t = stm->e->accept(this);
-    if (!(t->match(intType) || t->match(boolType))) {
-        cerr << "Error: tipo inválido en print (solo int o bool)." << endl;
+    if (!(t->match(intType) || t->match(boolType) || t->match(floatType))) {
+        cerr << "Error: tipo inválido en print (solo int, bool o float)." << endl;
         exit(0);
     }
 }
@@ -151,9 +163,13 @@ void TypeChecker::visit(AssignStm* stm) {
 }
 
 void TypeChecker::visit(ReturnStm* stm) {
+    if (retornodefuncion->match(voidType) && stm->e) {
+        cerr << "Error: función void no debe tener return con expresión." << endl;
+        exit(0);
+    }
     if (stm->e) {
         Type* t = stm->e->accept(this);
-        if (!(t->match(intType) || t->match(boolType) || t->match(voidType))) {
+        if (!(t->match(intType) || t->match(boolType) || t->match(floatType))) {
             cerr << "Error: tipo inválido en return." << endl;
             exit(0);
         }
@@ -162,6 +178,30 @@ void TypeChecker::visit(ReturnStm* stm) {
             exit(0);
         }
     }
+}
+
+// ===========================================================
+//   While / If
+// ===========================================================
+
+void TypeChecker::visit(WhileStm* stm) {
+    Type* t = stm->condition->accept(this);
+    if (!t->match(boolType)) {
+        cerr << "Error: condición de while debe ser bool." << endl;
+        exit(0);
+    }
+    stm->body->accept(this);
+}
+
+void TypeChecker::visit(IfStm* stm) {
+    Type* t = stm->condition->accept(this);
+    if (!t->match(boolType)) {
+        cerr << "Error: condición de if debe ser bool." << endl;
+        exit(0);
+    }
+    stm->thenBody->accept(this);
+    if (stm->elseBody)
+        stm->elseBody->accept(this);
 }
 
 // ===========================================================
@@ -178,25 +218,29 @@ Type* TypeChecker::visit(BinaryExp* e) {
         case MUL_OP: 
         case DIV_OP: 
         case POW_OP:
-            if (!(left->match(intType) && right->match(intType))) {
-                cerr << "Error: operación aritmética requiere operandos int." << endl;
-                exit(0);
-            }
-            return intType;
+            if (left->match(intType) && right->match(intType))
+                return intType;
+            if (left->match(floatType) && right->match(floatType))
+                return floatType;
+            if ((left->match(intType) && right->match(floatType)) ||
+                (left->match(floatType) && right->match(intType)))
+                return floatType;
+            cerr << "Error: operación aritmética requiere operandos int o float." << endl;
+            exit(0);
         case LE_OP:
-            if (!(left->match(intType) && right->match(intType))) {
-                cerr << "Error: operación aritmética requiere operandos int." << endl;
-                exit(0);
-            }
-        return boolType;
+            if (left->match(intType) && right->match(intType))
+                return boolType;
+            if (left->match(floatType) && right->match(floatType))
+                return boolType;
+            cerr << "Error: comparación requiere operandos int o float." << endl;
+            exit(0);
 
         case AND_OP:
             if (!(left->match(boolType) && right->match(boolType))) {
-                cerr << "Error: operación lógicas requiere operandos bool." << endl;
+                cerr << "Error: operación lógica requiere operandos bool." << endl;
                 exit(0);
             }
-        return boolType;
-
+            return boolType;
 
         default:
             cerr << "Error: operador binario no soportado." << endl;
@@ -204,7 +248,9 @@ Type* TypeChecker::visit(BinaryExp* e) {
     }
 }
 
-Type* TypeChecker::visit(NumberExp* e) { return intType; }
+Type* TypeChecker::visit(NumberExp* e) {
+    return e->is_float ? floatType : intType;
+}
 
 Type* TypeChecker::visit(BoolExp* e) { return boolType; }
 
@@ -222,5 +268,26 @@ Type* TypeChecker::visit(FcallExp* e) {
         cerr << "Error: llamada a función no declarada '" << e->nombre << "'." << endl;
         exit(0);
     }
-    return it->second;
+
+    FuncInfo& info = it->second;
+
+    if (e->argumentos.size() != info.paramTypes.size()) {
+        cerr << "Error: cantidad de argumentos en llamada a '" << e->nombre
+             << "' (" << e->argumentos.size() << ") no coincide con parámetros ("
+             << info.paramTypes.size() << ")." << endl;
+        exit(0);
+    }
+
+    int i = 0;
+    for (auto arg : e->argumentos) {
+        Type* argType = arg->accept(this);
+        if (!argType->match(info.paramTypes[i])) {
+            cerr << "Error: tipo de argumento " << (i+1) << " en llamada a '"
+                 << e->nombre << "' no coincide con tipo de parámetro." << endl;
+            exit(0);
+        }
+        i++;
+    }
+
+    return info.returnType;
 }

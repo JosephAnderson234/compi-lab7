@@ -16,6 +16,8 @@ class PrintStm;
 class AssignStm;
 class FunDec;
 class ReturnStm;
+class WhileStm;
+class IfStm;
 class Body;
 class VarDec;
 class FcallExp;
@@ -34,6 +36,8 @@ public:
     virtual void visit(PrintStm* stm) = 0;
     virtual void visit(AssignStm* stm) = 0;
     virtual void visit(ReturnStm* stm) = 0;
+    virtual void visit(WhileStm* stm) = 0;
+    virtual void visit(IfStm* stm) = 0;
 
     // --- Expresiones ---
     virtual Type* visit(BinaryExp* e) = 0;
@@ -49,15 +53,21 @@ public:
 //   CLASE TYPECHECKER
 // ──────────────────────────────────────────────
 
+struct FuncInfo {
+    Type* returnType;
+    vector<Type*> paramTypes;
+};
+
 class TypeChecker : public TypeVisitor {
 private:
     Environment<Type*> env;                 // Entorno de variables y sus tipos
-    unordered_map<string, Type*> functions; // Entorno de funciones
+    unordered_map<string, FuncInfo> functions; // Entorno de funciones
 
     // Tipos básicos
     Type* intType;
     Type* boolType;
     Type* voidType;
+    Type* floatType;
     Type* retornodefuncion;
     // Registro de funciones
     void add_function(FunDec* fd);
@@ -78,6 +88,8 @@ public:
     void visit(PrintStm* stm) override;
     void visit(AssignStm* stm) override;
     void visit(ReturnStm* stm) override;
+    void visit(WhileStm* stm) override;
+    void visit(IfStm* stm) override;
 
     // --- Expresiones ---
     Type* visit(BinaryExp* e) override;

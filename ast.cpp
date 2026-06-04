@@ -32,7 +32,7 @@ BinaryExp::~BinaryExp() {
 
 
 // ------------------ NumberExp ------------------
-NumberExp::NumberExp(int v) : value(v) {}
+NumberExp::NumberExp(double v, bool f) : value(v), is_float(f) {}
 
 NumberExp::~NumberExp() {}
 
@@ -60,3 +60,20 @@ AssignStm::AssignStm(string variable,Exp* expresion){
 }
 
 Program::Program(){}
+
+// ------------------ WhileStm ------------------
+WhileStm::WhileStm(Exp* c, Body* b) : condition(c), body(b) {}
+
+WhileStm::~WhileStm() {
+    delete condition;
+    delete body;
+}
+
+// ------------------ IfStm ------------------
+IfStm::IfStm(Exp* c, Body* t, Body* e) : condition(c), thenBody(t), elseBody(e) {}
+
+IfStm::~IfStm() {
+    delete condition;
+    delete thenBody;
+    delete elseBody;
+}

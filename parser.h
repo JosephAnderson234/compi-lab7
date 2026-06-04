@@ -19,6 +19,8 @@ public:
     FunDec* parseFunDec();
     Body* parseBody();
     Stm* parseStm();
+    Stm* parseWhileStm();
+    Stm* parseIfStm();
     Exp* parseCE();
     Exp* parseAE();
     Exp* parseBE();

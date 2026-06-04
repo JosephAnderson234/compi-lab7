@@ -11,7 +11,8 @@
 using namespace std;
 
 class Visitor;
-class TypeVisitor; // 👈 nuevo forward declaration
+class TypeVisitor;
+class Body;
 
 // Operadores binarios soportados
 enum BinaryOp { 
@@ -29,12 +30,11 @@ enum BinaryOp {
 // ============================================================
 class Exp {
 public:
-    virtual int  accept(Visitor* visitor) = 0;
+    virtual double accept(Visitor* visitor) = 0;
     virtual ~Exp() = 0;
     static string binopToChar(BinaryOp op);
 
-    // --- NUEVO ---
-    virtual Type* accept(TypeVisitor* visitor) = 0; // Para verificador de tipos
+    virtual Type* accept(TypeVisitor* visitor) = 0;
 };
 
 // ============================================================
@@ -49,8 +49,8 @@ public:
     BinaryExp(Exp* l, Exp* r, BinaryOp op);
     ~BinaryExp();
 
-    int accept(Visitor* visitor);
-    Type* accept(TypeVisitor* visitor); // nuevo
+    double accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
 };
 
 // ============================================================
@@ -58,13 +58,14 @@ public:
 // ============================================================
 class NumberExp : public Exp {
 public:
-    int value;
+    double value;
+    bool is_float;
 
-    NumberExp(int v);
+    NumberExp(double v, bool f = false);
     ~NumberExp();
 
-    int accept(Visitor* visitor);
-    Type* accept(TypeVisitor* visitor); // nuevo
+    double accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
 };
 
 // ============================================================
@@ -77,8 +78,8 @@ public:
     BoolExp(){};
     ~BoolExp(){};
 
-    int accept(Visitor* visitor);
-    Type* accept(TypeVisitor* visitor); // nuevo
+    double accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
 };
 
 
@@ -92,8 +93,8 @@ public:
     IdExp(string v);
     ~IdExp();
 
-    int accept(Visitor* visitor);
-    Type* accept(TypeVisitor* visitor); // nuevo
+    double accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
 };
 
 // ============================================================
@@ -107,8 +108,8 @@ public:
     FcallExp(){};
     ~FcallExp(){};
 
-    int accept(Visitor* visitor);
-    Type* accept(TypeVisitor* visitor); // nuevo
+    double accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
 };
 
 // ============================================================
@@ -158,6 +159,31 @@ public:
 
     int accept(Visitor* visitor);
     void accept(TypeVisitor* visitor); // nuevo
+};
+
+class WhileStm : public Stm {
+public:
+    Exp* condition;
+    Body* body;
+
+    WhileStm(Exp* c, Body* b);
+    ~WhileStm();
+
+    int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
+};
+
+class IfStm : public Stm {
+public:
+    Exp* condition;
+    Body* thenBody;
+    Body* elseBody;
+
+    IfStm(Exp* c, Body* t, Body* e);
+    ~IfStm();
+
+    int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
 };
 
 // ============================================================
