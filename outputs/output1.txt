@@ -18,8 +18,6 @@ return 0
 
 
 === Iniciando verificación de tipos ===
-3
-2
 
 === STDERR ===
 Error: retorno distinto.

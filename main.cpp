@@ -5,7 +5,7 @@
 #include "parser.h"
 #include "ast.h"
 #include "visitor.h"
-#include "typechecker.h" 
+#include "TypeChecker.h" 
 
 using namespace std;
 
