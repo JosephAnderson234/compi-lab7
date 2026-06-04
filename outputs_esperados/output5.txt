@@ -1,0 +1,7 @@
+=== STDOUT ===
+Parseo exitoso
+
+=== Iniciando verificación de tipos ===
+
+=== STDERR ===
+Error: tipo de argumento inválido en posición 2 para llamada a 'calc'.

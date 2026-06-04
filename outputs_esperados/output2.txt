@@ -1,0 +1,7 @@
+=== STDOUT ===
+Parseo exitoso
+
+=== Iniciando verificación de tipos ===
+
+=== STDERR ===
+Error: retorno distinto al tipo declarado de la función.

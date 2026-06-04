@@ -53,10 +53,11 @@ int main(int argc, const char* argv[]) {
     
 
     // Paso 1: Impresión del AST
+    /*
     cout << "\n=== Iniciando impresión del programa ===\n";
     PrintVisitor impresion;
     impresion.imprimir(ast);
-
+    */
     // Paso 2: Chequeo de tipos
     cout << "\n=== Iniciando verificación de tipos ===\n";
     TypeChecker tc;

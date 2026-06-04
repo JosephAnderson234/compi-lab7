@@ -1,0 +1,13 @@
+=== STDOUT ===
+Parseo exitoso
+
+=== Iniciando verificación de tipos ===
+Revisión exitosa
+
+=== Iniciando ejecución del programa ===
+Interprete:
+14.5
+2.5
+false
+
+=== STDERR ===

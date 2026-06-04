@@ -1,0 +1,7 @@
+=== STDOUT ===
+Parseo exitoso
+
+=== Iniciando verificación de tipos ===
+
+=== STDERR ===
+Error: una función void no debe tener return.

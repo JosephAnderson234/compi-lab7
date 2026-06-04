@@ -1,0 +1,7 @@
+=== STDOUT ===
+Parseo exitoso
+
+=== Iniciando verificación de tipos ===
+
+=== STDERR ===
+Error: tipos incompatibles en asignación a 'ready'.

@@ -1,0 +1,7 @@
+=== STDOUT ===
+Parseo exitoso
+
+=== Iniciando verificación de tipos ===
+
+=== STDERR ===
+Error: cantidad de argumentos inválida en llamada a 'blend'.
