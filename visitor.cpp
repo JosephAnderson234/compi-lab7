@@ -208,7 +208,12 @@ double EVALVisitor::visit(BinaryExp* exp) {
 }
 
 int EVALVisitor::visit(PrintStm* p) {
-    cout << p->e->accept(this) << endl;
+    double val = p->e->accept(this);
+    string type = getType(p->e);
+    if (type == "bool")
+        cout << (val != 0 ? "true" : "false") << endl;
+    else
+        cout << val << endl;
     return 0;
 }
 
@@ -244,19 +249,22 @@ int EVALVisitor::visit(IfStm* stm) {
 
 int EVALVisitor::visit(VarDec* vd) {
     for (auto& i : vd->variables) {
-        env.add_var(i);  // solo declara, valor por defecto = 0
+        env.add_var(i);
+        typeEnv.add_var(i, vd->tipo);
     }
     return 0;
 }
 
 int EVALVisitor::visit(Body* b) {
     env.add_level();
+    typeEnv.add_level();
     for (auto i:b->vdlist){
         i->accept(this);
     }
     for (auto i:b->stmlist){
         i->accept(this);
     }
+    typeEnv.remove_level();
     env.remove_level();
     return 0;
 }
@@ -269,12 +277,15 @@ double EVALVisitor::visit(FcallExp* fcall) {
     } 
     FunDec* fd = envfun[fcall->nombre];
     env.add_level();
+    typeEnv.add_level();
 
     for (size_t i = 0; i < arg.size(); ++i) {
         env.add_var(fd->Nparametros[i], arg[i]);
+        typeEnv.add_var(fd->Nparametros[i], fd->Tparametros[i]);
     }
 
     fd->cuerpo->accept(this);
+    typeEnv.remove_level();
     env.remove_level();
 
     if (fd->tipo == "void") {
@@ -290,11 +301,13 @@ double EVALVisitor::visit(FcallExp* fcall) {
 
 int EVALVisitor::visit(FunDec* fd) {
     envfun[fd->nombre] = fd;
+    funReturnTypes[fd->nombre] = fd->tipo;
     return 0;
 }
 
 int EVALVisitor::visit(Program* p) {
     env.add_level();
+    typeEnv.add_level();
     for(auto i:p->vdlist){
         i->accept(this);
     }
@@ -309,8 +322,24 @@ int EVALVisitor::visit(Program* p) {
         cout << "no existe main"<< endl;
         exit(0);
     }
+    typeEnv.remove_level();
     env.remove_level();
     return 0;
+}
+
+string EVALVisitor::getType(Exp* e) {
+    if (auto* be = dynamic_cast<BoolExp*>(e)) return "bool";
+    if (auto* ne = dynamic_cast<NumberExp*>(e)) return ne->is_float ? "float" : "int";
+    if (auto* ie = dynamic_cast<IdExp*>(e)) return typeEnv.lookup(ie->value);
+    if (auto* bexp = dynamic_cast<BinaryExp*>(e)) {
+        if (bexp->op == LE_OP || bexp->op == AND_OP) return "bool";
+        string lt = getType(bexp->left);
+        string rt = getType(bexp->right);
+        return (lt == "float" || rt == "float") ? "float" : "int";
+    }
+    if (auto* fe = dynamic_cast<FcallExp*>(e))
+        return funReturnTypes[fe->nombre];
+    return "int";
 }
 
 void EVALVisitor::interprete(Program* programa) {

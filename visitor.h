@@ -65,7 +65,9 @@ public:
 class EVALVisitor : public Visitor {
 public:
     Environment<double> env;
+    Environment<string> typeEnv;
     unordered_map<string, FunDec*> envfun;
+    unordered_map<string, string> funReturnTypes;
     double retval;
     bool retcall;
     double visit(BinaryExp* exp) override;
@@ -83,6 +85,7 @@ public:
     int visit(Body* b) override;
     int visit(FunDec* fd) override;
     void interprete(Program* program);
+    string getType(Exp* e);
 };
 
 

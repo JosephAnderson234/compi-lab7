@@ -174,7 +174,7 @@ void TypeChecker::visit(ReturnStm* stm) {
             exit(0);
         }
         if (!(t->match(retornodefuncion))) {
-            cerr << "Error:  retorno distinto al tipo declarado de la función." << endl;
+            cerr << "Error: retorno distinto al tipo declarado de la función." << endl;
             exit(0);
         }
     }
@@ -281,7 +281,7 @@ Type* TypeChecker::visit(FcallExp* e) {
     for (auto arg : e->argumentos) {
         Type* argType = arg->accept(this);
         if (!argType->match(info.paramTypes[i])) {
-            cerr << "Error: tipo de argumento inválido en posición " << (i+1) << " para  llamada a '"
+            cerr << "Error: tipo de argumento inválido en posición " << (i+1) << " para llamada a '"
                  << e->nombre << "'." << endl;
             exit(0);
         }
