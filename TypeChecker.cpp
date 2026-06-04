@@ -164,7 +164,7 @@ void TypeChecker::visit(AssignStm* stm) {
 
 void TypeChecker::visit(ReturnStm* stm) {
     if (retornodefuncion->match(voidType) && stm->e) {
-        cerr << "Error: función void no debe tener return con expresión." << endl;
+        cerr << "Error: una función void no debe tener return." << endl;
         exit(0);
     }
     if (stm->e) {
@@ -174,7 +174,7 @@ void TypeChecker::visit(ReturnStm* stm) {
             exit(0);
         }
         if (!(t->match(retornodefuncion))) {
-            cerr << "Error: retorno distinto." << endl;
+            cerr << "Error:  retorno distinto al tipo declarado de la función." << endl;
             exit(0);
         }
     }
@@ -272,9 +272,8 @@ Type* TypeChecker::visit(FcallExp* e) {
     FuncInfo& info = it->second;
 
     if (e->argumentos.size() != info.paramTypes.size()) {
-        cerr << "Error: cantidad de argumentos en llamada a '" << e->nombre
-             << "' (" << e->argumentos.size() << ") no coincide con parámetros ("
-             << info.paramTypes.size() << ")." << endl;
+        cerr << "Error: cantidad de argumentos inválida en llamada a '" << e->nombre
+             << "'." << endl;
         exit(0);
     }
 
@@ -282,8 +281,8 @@ Type* TypeChecker::visit(FcallExp* e) {
     for (auto arg : e->argumentos) {
         Type* argType = arg->accept(this);
         if (!argType->match(info.paramTypes[i])) {
-            cerr << "Error: tipo de argumento " << (i+1) << " en llamada a '"
-                 << e->nombre << "' no coincide con tipo de parámetro." << endl;
+            cerr << "Error: tipo de argumento inválido en posición " << (i+1) << " para  llamada a '"
+                 << e->nombre << "'." << endl;
             exit(0);
         }
         i++;
