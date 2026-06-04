@@ -72,7 +72,7 @@ int PrintVisitor::visit(PrintStm* stm) {
 }
 
 int PrintVisitor::visit(AssignStm* stm) {
-    cout << stm->id << "=";
+    cout << stm->id << " = ";
     stm->e->accept(this);
     cout << endl;
     return 0;
@@ -110,7 +110,7 @@ int PrintVisitor::visit(IfStm* stm) {
 int PrintVisitor::visit(VarDec* vd) {
     cout << "var " << vd->tipo;
     for(auto i:vd->variables){
-        cout << i << ",";
+        cout<<" " << i << ",";
     }
     cout << ";" << endl;
     return 0;
@@ -277,6 +277,9 @@ double EVALVisitor::visit(FcallExp* fcall) {
     fd->cuerpo->accept(this);
     env.remove_level();
 
+    if (fd->tipo == "void") {
+        return 0;
+    }
     if (retcall) {
         return retval;
     } else {

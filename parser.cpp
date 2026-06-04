@@ -130,6 +130,7 @@ Body* Parser::parseBody(){
         match(Token::SEMICOL);
         while(check(Token::VAR)){
             b->vdlist.push_back(parseVarDec());
+            match(Token::SEMICOL);
         }
     }
     b->stmlist.push_back(parseStm());
@@ -145,6 +146,28 @@ Stm* Parser::parseStm() {
     string variable;
     if(match(Token::ID)){
         variable = previous->text;
+        if (check(Token::LPAREN)) {
+            FcallExp* fcall = new FcallExp();
+            fcall->nombre = variable;
+            match(Token::LPAREN);
+            if (!check(Token::RPAREN)) {
+                fcall->argumentos.push_back(parseCE());
+                while(match(Token::COMA)){
+                    fcall->argumentos.push_back(parseCE());
+                }
+            }
+            match(Token::RPAREN);
+            // FcallExp as a statement: evaluate and discard
+            FcallExp* fc = fcall;
+            class ExprStm : public Stm {
+            public:
+                FcallExp* fcall;
+                ExprStm(FcallExp* f) : fcall(f) {}
+                int accept(Visitor* v) { fcall->accept(v); return 0; }
+                void accept(TypeVisitor* v) { fcall->accept(v); }
+            };
+            return new ExprStm(fcall);
+        }
         match(Token::ASSIGN);
         e = parseCE();
         return new AssignStm(variable,e);
