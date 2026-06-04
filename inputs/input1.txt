@@ -1,0 +1,12 @@
+var int x,z;
+fun bool suma(int a, int b)
+    var int y;
+    y = a + b;
+    return(y)
+endfun
+fun int main()
+    var bool a;
+    a = suma(2,3);
+    print(a);
+    return(0)
+endfun
