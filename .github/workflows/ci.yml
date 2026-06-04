@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ "**" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compilar y ejecutar input1.txt
+        run: |
+          cat > input1.txt << 'EOF'
+          var int x,z;
+          fun bool suma(int a, int b)
+              var int y;
+              y = a + b;
+              return(y)
+          endfun
+          fun int main()
+              var bool a;
+              a = suma(2,3);
+              print(a);
+              return(0)
+          endfun
+          EOF
+          g++ -std=c++11 main.cpp scanner.cpp token.cpp parser.cpp ast.cpp visitor.cpp TypeChecker.cpp -o a.out
+          mkdir -p outputs
+          ./a.out input1.txt
+          if [ -f ast.dot ]; then
+            cp ast.dot outputs/ast_1.dot
+            dot -Tpng outputs/ast_1.dot -o outputs/ast_1.png 2>/dev/null || true
+          fi
+          echo "=== Input 1 ejecutado ==="
+
+      - name: Compilar y ejecutar input2.txt
+        run: |
+          cat > input2.txt << 'EOF'
+          var int x;
+          var bool z;
+          fun float suma(float a, float b):
+              var float y;
+              y = a + b;
+              return(y)
+          endfun
+          fun int main():
+              var float a;
+              a = suma(3.14,2.71);
+              x = 10;
+              z = True;
+              print(a); 
+              print(x);
+              print(z);
+              return(0)
+          endfun
+          EOF
+          g++ -std=c++11 main.cpp scanner.cpp token.cpp parser.cpp ast.cpp visitor.cpp TypeChecker.cpp -o a.out
+          mkdir -p outputs
+          ./a.out input2.txt
+          if [ -f ast.dot ]; then
+            cp ast.dot outputs/ast_2.dot
+            dot -Tpng outputs/ast_2.dot -o outputs/ast_2.png 2>/dev/null || true
+          fi
+          echo "=== Input 2 ejecutado ==="
